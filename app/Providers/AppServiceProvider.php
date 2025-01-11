@@ -20,5 +20,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         //
+        $this->loadViewsFrom(app_path('Modules/Store/Views'), 'Store');
     }
 }
