@@ -1,19 +1,19 @@
 @extends('layouts.master') <!-- Kế thừa file master.blade.php -->
-@section('title', 'Danh sách người dùng')
+@section('title', 'Danh sách menu')
 @section('content')
 
     <div class="row">
-        <form action="{{route('users.index')}}" class="w-100 d-flex flex-wrap">
+        <form action="{{route('menus.index')}}" class="w-100 d-flex flex-wrap">
             <div class="col-sm-3">
-                <input type="text" class="form-control" id="name_search" value="{{request('name')}}" name="name"
+                <input type="text" class="form-control" id="title_search" value="{{request('title')}}" name="title"
                        placeholder="Nhập tên">
             </div>
             <div class="col-sm-3">
-                <input type="text" class="form-control" id="email_search" value="{{request('email')}}" name="email"
-                       placeholder="Nhập email">
+                <input type="text" class="form-control" id="url_search" value="{{request('url')}}" name="url"
+                       placeholder="Nhập đường dẫn">
             </div>
             <button type="submit" class="btn btn-primary"><i class="fa fa-search" aria-hidden="true"></i> Lọc</button>
-            <a type="button" href="{{route('users.index')}}" class="btn btn-default">Bỏ lọc</a>
+            <a type="button" href="{{route('menus.index')}}" class="btn btn-default">Bỏ lọc</a>
         </form>
     </div>
 
@@ -22,12 +22,13 @@
         <i class="fa fa-plus" aria-hidden="true"></i> Thêm mới
     </a>
 
-    <table class="table pt-5 table-hover">
+    <table class="table pt-5 table-hover table-sm">
         <thead class="thead-light">
         <tr>
             <th>STT</th>
-            <th>Name</th>
-            <th>Email</th>
+            <th>Tên</th>
+            <th>Đường dẫn</th>
+            <th>Menu cha</th>
             <th>Hành động</th>
         </tr>
         </thead>
@@ -36,8 +37,9 @@
             @foreach($data as $value)
                 <tr>
                     <td>{{ ($data->currentPage() - 1) * $data->perPage() + $loop->iteration }}</td>
-                    <td>{{$value['name']}}</td>
-                    <td>{{$value['email']}}</td>
+                    <td>{{$value['title']}}</td>
+                    <td>{{$value['url']}}</td>
+                    <td>{{@$value['parent_name']}}</td>
                     <td>
                         <div class="dropdown">
                             <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton"

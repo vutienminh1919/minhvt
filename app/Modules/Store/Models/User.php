@@ -11,6 +11,9 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
+    protected $table = 'users'; // Tên bảng
+    public $timestamps = false; // Tắt created_at và updated_at
+
     protected $fillable = [
         'name',
         'email',
