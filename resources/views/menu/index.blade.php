@@ -1,7 +1,12 @@
 @extends('layouts.master') <!-- Kế thừa file master.blade.php -->
 @section('title', 'Danh sách menu')
 @section('content')
-
+    @if (session('success'))
+        <div id="success-message"
+             style="background-color: #d4edda; color: #155724; padding: 10px; border: 1px solid #c3e6cb; border-radius: 5px; margin-bottom: 15px;">
+            {{ session('success') }}
+        </div>
+    @endif
     <div class="row">
         <form action="{{route('menus.index')}}" class="w-100 d-flex flex-wrap">
             <div class="col-sm-3">
@@ -17,8 +22,7 @@
         </form>
     </div>
 
-    <a type="button" class="btn btn-primary float-right" data-action="create" data-toggle="modal"
-       data-target="#createUser">
+    <a type="button" href="{{route('menus.showFormCreate')}}" class="btn btn-primary float-right" data-action="create">
         <i class="fa fa-plus" aria-hidden="true"></i> Thêm mới
     </a>
 
@@ -29,6 +33,7 @@
             <th>Tên</th>
             <th>Đường dẫn</th>
             <th>Menu cha</th>
+            <th>Trạng thái</th>
             <th>Hành động</th>
         </tr>
         </thead>
@@ -41,16 +46,22 @@
                     <td>{{$value['url']}}</td>
                     <td>{{@$value['parent_name']}}</td>
                     <td>
+                        <span
+                            class="{{config('menu.status_color')[$value['status']]}}">{{config('menu.status')[$value['status']]}}</span>
+                    </td>
+                    <td>
                         <div class="dropdown">
                             <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton"
                                     data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 Thao tác
                             </button>
                             <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                <a class="dropdown-item" href="#">Chi tiết</a>
-                                <a class="dropdown-item updateUser" href="#" data-toggle="modal"
-                                   data-id="{{$value['id']}}" data-action="update"
-                                   data-target="#createUser">Chỉnh sửa</a>
+                                <a class="dropdown-item lock_menu" data-id="{{$value['id']}}"
+                                   data-status="{{$value['status'] == config('menu.status_name')['ACTIVE'] ? '2': '1'}}"
+                                   href="#">{{$value['status'] == config('menu.status_name')['ACTIVE'] ? 'Khoá': 'Mở'}}</a>
+                                <a class="dropdown-item update_menu" href="#" data-toggle="modal"
+                                   data-id="{{$value['id']}}"
+                                   data-target="#updateMenu">Chỉnh sửa</a>
                             </div>
                         </div>
                     </td>
@@ -62,92 +73,88 @@
     <div class="float-right">
         {{ $data->links() }}
     </div>
-    @include('Store::user.modal.create')
+    @include('menu.modal.update')
 @endsection
 @push('scripts')
     <script>
         $(document).ready(function () {
 
-            $(document).on('click', '[data-target="#createUser"]', function () {
-                const action = $(this).data('action'); // Lấy giá trị data-action
-                const modal = $('#createUser'); // Lấy modal
+            if ($('#success-message').length) {
+                // Tự động ẩn thông báo sau 3 giây
+                setTimeout(function () {
+                    $('#success-message').fadeOut('slow'); // Hiệu ứng mờ dần
+                }, 3000);
+            }
 
-                if (action === 'create') {
-                    // Hành động thêm mới
-                    $('#submitUpdateUser').hide();
-                    $('#submitCreateUser').show();
-                    modal.find('.modal-title').text('Thêm mới người dùng'); // Thay đổi tiêu đề
-                    modal.find('input').val(''); // Xóa dữ liệu trong form
-                } else if (action === 'update') {
-                    // Hành động chỉnh sửa
-                    $('#submitCreateUser').hide();
-                    $('#submitUpdateUser').show();
-                    const userId = $(this).data('id'); // Lấy ID người dùng
-                    console.log(userId);
-                    $('#user_id').val(userId)
-                    modal.find('.modal-title').text('Chỉnh sửa người dùng'); // Thay đổi tiêu đề
+            $('.lock_menu').on('click', function () {
+                let id = $(this).data('id');
+                let status = $(this).data('status');
+                console.log(id);
+                Swal.fire({
+                    title: "Bạn có chắc chắn muốn thao tác hay không ?",
+                    showCancelButton: true,
+                    confirmButtonText: "Xác nhận",
+                    cancelButtonText: "Huỷ",
+                    icon: "question"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '{{route('menus.changeStatus')}}', // URL định nghĩa trong route
+                            type: 'POST',
+                            dataType: 'json',
+                            data: {
+                                id: id,
+                                status: status,
+                                _token: '{{ csrf_token() }}' // CSRF token để bảo mật
+                            },
+                            success: function (response) {
+                                if (response.code == 200) {
+                                    Swal.fire({
+                                        icon: "success",
+                                        title: response.message,
+                                        showConfirmButton: true,
+                                        timer: 3000,
+                                        didClose: () => {
+                                            // Khi SweetAlert tự động đóng sau 3 giây
+                                            window.location.reload(); // Reload trang
+                                        }
+                                    }).then((result) => {
+                                        /* Read more about isConfirmed, isDenied below */
+                                        if (result.isConfirmed) {
+                                            window.location.reload();
+                                        }
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: "error",
+                                        title: response.message,
+                                        showConfirmButton: true,
+                                    });
+                                }
 
-                    // Gửi AJAX để lấy thông tin người dùng
-                    $.ajax({
-                        url: '{{ route('users.getUser', ['id' => ':id']) }}'.replace(':id', userId),
-                        method: 'GET',
-                        success: function (response) {
-                            modal.find('#name').val(response.name);
-                            modal.find('#email').val(response.email);
-                            modal.find('#password').val("");
-                        },
-                        error: function () {
-                            alert('Không thể tải thông tin người dùng.');
-                        }
-                    });
-                }
+                            },
+                            error: function (xhr) {
 
-                modal.modal('show'); // Hiển thị modal
-            });
+                            }
+                        });
+                    }
+                });
+            })
 
-
-            $('#submitCreateUser').on('click', function () {
-                let name = $('#name').val();
-                let email = $('#email').val();
-                let password = $('#password').val();
-
-                // Kiểm tra dữ liệu trước khi gửi
-                if (!name || !email || !password) {
-                    return alert('Vui lòng điền đầy đủ thông tin.');
-                }
+            $('.update_menu').on('click', function () {
+                let id = $(this).data('id');
+                let detailUrl = "{{ route('menus.detail', ':id') }}".replace(':id', id); // Thay thế :id bằng giá trị thực tế
                 $.ajax({
-                    url: '{{route('users.create')}}', // URL định nghĩa trong route
-                    type: 'POST',
-                    dataType: 'json',
-                    data: {
-                        name: name,
-                        email: email,
-                        password: password,
-                        _token: '{{ csrf_token() }}' // CSRF token để bảo mật
-                    },
+                    url: detailUrl, // URL định nghĩa trong route
+                    type: 'GET',
                     success: function (response) {
                         if (response.code == 200) {
-                            // Đóng modal
-                            $('#createUser').modal('hide');
-                            // Reset các trường trong modal
-                            $('#name').val('');
-                            $('#email').val('');
-                            $('#password').val('');
-                            Swal.fire({
-                                icon: "success",
-                                title: response.message,
-                                showConfirmButton: true,
-                                timer: 3000,
-                                didClose: () => {
-                                    // Khi SweetAlert tự động đóng sau 3 giây
-                                    window.location.reload(); // Reload trang
-                                }
-                            }).then((result) => {
-                                /* Read more about isConfirmed, isDenied below */
-                                if (result.isConfirmed) {
-                                    window.location.reload();
-                                }
-                            });
+                            $('#parent_id').html(response.data.parent_menu)
+                            $('#menu_id').val(id)
+                            $('#title').val(response.data.detail.title)
+                            $('#url').val(response.data.detail.url)
+                            $('#icon').val(response.data.detail.icon)
+                            $('#display_order').val(response.data.detail.display_order)
                         } else {
                             Swal.fire({
                                 icon: "error",
@@ -158,46 +165,37 @@
 
                     },
                     error: function (xhr) {
-                        // Xử lý lỗi
-                        let errors = xhr.responseJSON.errors;
-                        let errorMessage = 'Có lỗi xảy ra:\n';
-                        $.each(errors, function (key, value) {
-                            errorMessage += value[0] + '\n';
-                        });
-                        alert(errorMessage);
+
                     }
                 });
             })
-
-            $('#submitUpdateUser').on('click', function () {
-                let name = $('#name').val();
-                let email = $('#email').val();
-                let password = $('#password').val();
-                let id = $('#user_id').val();
+            $('#submitUpdateMenu').on('click', function () {
+                let title = $('#title').val();
+                let url = $('#url').val();
+                let parent_id = $('#parent_id').val();
+                let display_order = $('#display_order').val();
+                let icon = $('#icon').val();
+                let id = $('#menu_id').val();
 
                 // Kiểm tra dữ liệu trước khi gửi
-                if (!name || !email) {
-                    return alert('Vui lòng điền đầy đủ thông tin.');
-                }
+
                 $.ajax({
-                    url: '{{route('users.update')}}', // URL định nghĩa trong route
+                    url: '{{route('menus.update')}}', // URL định nghĩa trong route
                     type: 'POST',
                     dataType: 'json',
                     data: {
                         id: id,
-                        name: name,
-                        email: email,
-                        password: password,
+                        title: title,
+                        url: url,
+                        parent_id: parent_id,
+                        display_order: display_order,
+                        icon: icon,
                         _token: '{{ csrf_token() }}' // CSRF token để bảo mật
                     },
                     success: function (response) {
                         if (response.code == 200) {
                             // Đóng modal
-                            $('#createUser').modal('hide');
-                            // Reset các trường trong modal
-                            $('#name').val('');
-                            $('#email').val('');
-                            $('#password').val('');
+                            $('#updateMenu').modal('hide');
                             Swal.fire({
                                 icon: "success",
                                 title: response.message,

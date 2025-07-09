@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Menu extends Model
 {
     protected $table = 'menus';
-    protected $fillable = ['parent_id', 'title', 'url', 'icon', 'order'];
+    protected $fillable = ['parent_id', 'title', 'url', 'icon', 'order', 'time_created', 'time_updated', 'status'];
     public $timestamps = false;
 
     // Lấy menu con

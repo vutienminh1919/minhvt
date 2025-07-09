@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Menu;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -33,10 +34,21 @@ class AppServiceProvider extends ServiceProvider
         });
         View::composer('layouts.master', function ($view) {
             $menus = Menu::whereNull('parent_id') // Chỉ lấy menu cha
-            ->with('children')               // Lấy menu con
-            ->orderBy('display_order')       // Sắp xếp theo thứ tự hiển thị
-            ->get()->toArray(); // Lấy dữ liệu menus
+            ->whereIn('status', [1])
+                ->with(['children' => function ($query) {
+                    $query->whereIn('status', [1]); // Loại bỏ các menu con có status = 3
+                }])               // Lấy menu con
+                ->orderBy('display_order')// Sắp xếp theo thứ tự hiển thị
+                ->get()->toArray(); // Lấy dữ liệu menus
             $view->with('menus', $menus); // Gửi dữ liệu tới view
         });
+        //Đăng ký configs
+        $configPath = app_path('Configs'); // Đường dẫn tới thư mục Configs
+        $configFiles = glob($configPath . '/*.php'); // Lấy tất cả file .php
+
+        foreach ($configFiles as $file) {
+            $configName = basename($file, '.php'); // Tên file không có .php
+            Config::set($configName, require $file); // Nạp nội dung file vào cấu hình
+        }
     }
 }

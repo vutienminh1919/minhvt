@@ -21,13 +21,14 @@ Route::prefix('/users')->group(function () {
 
 Route::prefix('/menus')->group(function () {
     Route::get('', [MenuController::class, 'index'])->name('menus.index');
-    Route::get('/{id}', [MenuController::class, 'getUser'])->name('menus.detail');
+    Route::get('/show-form-create', [MenuController::class, 'showFormCreate'])->name('menus.showFormCreate');
     Route::post('/create', [MenuController::class, 'create'])->name('menus.create');
+    Route::post('/change-status', [MenuController::class, 'changeStatus'])->name('menus.changeStatus');
+    Route::get('/{id}', [MenuController::class, 'detail'])->name('menus.detail');
     Route::post('/update', [MenuController::class, 'update'])->name('menus.update');
 });
 
 Route::get('login', function () {
-
     return view('authen.login');
 })->name('login');
 Route::post('login', [AuthenController::class, 'login'])->name('authen.login');

@@ -22,7 +22,7 @@
         <i class="fa fa-plus" aria-hidden="true"></i> Thêm mới
     </a>
 
-    <table class="table pt-5 table-hover">
+    <table class="table pt-5 table-hover table-sm">
         <thead class="thead-light">
         <tr>
             <th>STT</th>
@@ -65,43 +65,6 @@
 @push('scripts')
     <script>
         $(document).ready(function () {
-
-            $(document).on('click', '[data-target="#createUser"]', function () {
-                const action = $(this).data('action'); // Lấy giá trị data-action
-                const modal = $('#createUser'); // Lấy modal
-
-                if (action === 'create') {
-                    // Hành động thêm mới
-                    $('#submitUpdateUser').hide();
-                    $('#submitCreateUser').show();
-                    modal.find('.modal-title').text('Thêm mới người dùng'); // Thay đổi tiêu đề
-                    modal.find('input').val(''); // Xóa dữ liệu trong form
-                } else if (action === 'update') {
-                    // Hành động chỉnh sửa
-                    $('#submitCreateUser').hide();
-                    $('#submitUpdateUser').show();
-                    const userId = $(this).data('id'); // Lấy ID người dùng
-                    console.log(userId);
-                    $('#user_id').val(userId)
-                    modal.find('.modal-title').text('Chỉnh sửa người dùng'); // Thay đổi tiêu đề
-
-                    // Gửi AJAX để lấy thông tin người dùng
-                    $.ajax({
-                        url: '{{ route('users.getUser', ['id' => ':id']) }}'.replace(':id', userId),
-                        method: 'GET',
-                        success: function (response) {
-                            modal.find('#name').val(response.name);
-                            modal.find('#email').val(response.email);
-                            modal.find('#password').val("");
-                        },
-                        error: function () {
-                            alert('Không thể tải thông tin người dùng.');
-                        }
-                    });
-                }
-
-                modal.modal('show'); // Hiển thị modal
-            });
 
 
             $('#submitCreateUser').on('click', function () {
@@ -156,13 +119,7 @@
 
                     },
                     error: function (xhr) {
-                        // Xử lý lỗi
-                        let errors = xhr.responseJSON.errors;
-                        let errorMessage = 'Có lỗi xảy ra:\n';
-                        $.each(errors, function (key, value) {
-                            errorMessage += value[0] + '\n';
-                        });
-                        alert(errorMessage);
+
                     }
                 });
             })
@@ -221,13 +178,6 @@
 
                     },
                     error: function (xhr) {
-                        // Xử lý lỗi
-                        let errors = xhr.responseJSON.errors;
-                        let errorMessage = 'Có lỗi xảy ra:\n';
-                        $.each(errors, function (key, value) {
-                            errorMessage += value[0] + '\n';
-                        });
-                        alert(errorMessage);
                     }
                 });
             })
