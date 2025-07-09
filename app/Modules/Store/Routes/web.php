@@ -4,6 +4,7 @@
 use App\Http\Controllers\AuthenController;
 use App\Http\Controllers\MenuController;
 use App\Modules\Store\Controllers\UserController;
+use App\Modules\Store\Controllers\VietQrController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -26,6 +27,12 @@ Route::prefix('/menus')->group(function () {
     Route::post('/change-status', [MenuController::class, 'changeStatus'])->name('menus.changeStatus');
     Route::get('/{id}', [MenuController::class, 'detail'])->name('menus.detail');
     Route::post('/update', [MenuController::class, 'update'])->name('menus.update');
+});
+
+Route::prefix('/viet-qr')->group(function () {
+    Route::get('create', [VietQrController::class, 'create'])->name('viet-qr.create');
+    Route::get('get-banks-list', [VietQrController::class, 'getBankList'])->name('viet-qr.get-bank-list');
+
 });
 
 Route::get('login', function () {
